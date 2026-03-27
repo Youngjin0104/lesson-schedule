@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0d1117">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="레슨스케줄">
+<link rel="manifest" href="manifest.json">
+<title>레슨 스케줄 관리</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ========== LOGIN SCREEN ========== -->
+<div id="loginScreen" class="screen active">
+  <div class="login-bg">
+    <div class="login-blob b1"></div>
+    <div class="login-blob b2"></div>
+    <div class="login-blob b3"></div>
+  </div>
+  <div class="login-wrap">
+    <div class="login-logo">
+      <div class="logo-icon">📋</div>
+      <h1 class="logo-title">레슨스케줄</h1>
+      <p class="logo-sub">선생님 수업 관리 시스템</p>
+    </div>
+    <div class="login-card">
+      <div class="form-group">
+        <label class="form-label">이메일</label>
+        <input class="form-input" id="loginEmail" type="email" placeholder="example@email.com" autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label class="form-label">비밀번호</label>
+        <input class="form-input" id="loginPassword" type="password" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <div id="loginError" class="error-msg" style="display:none"></div>
+      <button class="btn btn-primary btn-full" id="loginBtn" onclick="doLogin()">
+        <span>로그인</span>
+      </button>
+    </div>
+    <p class="login-hint">계정 문의: 관리자에게 연락하세요</p>
+  </div>
+</div>
+
+<!-- ========== MAIN APP ========== -->
+<div id="appScreen" class="screen">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+      <div class="topbar-title" id="pageTitle">스케줄</div>
+    </div>
+    <div class="topbar-right">
+      <div class="user-chip" id="userChip">
+        <span id="userRoleBadge" class="role-badge"></span>
+        <span id="userNameDisplay"></span>
+      </div>
+      <button class="icon-btn" onclick="doLogout()">🚪</button>
+    </div>
+  </div>
+
+  <!-- SIDEBAR -->
+  <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="closeSidebar()"></div>
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">📋 레슨스케줄</div>
+      <button class="sidebar-close" onclick="closeSidebar()">✕</button>
+    </div>
+    <div class="sidebar-user" id="sidebarUser"></div>
+    <nav class="sidebar-nav">
+      <a class="nav-link active" data-page="schedule" onclick="goPage('schedule')">
+        <span class="nav-icon">📅</span> 수업 스케줄
+      </a>
+      <a class="nav-link" data-page="monthly" onclick="goPage('monthly')">
+        <span class="nav-icon">📆</span> 월별 캘린더
+      </a>
+      <a class="nav-link admin-only" data-page="teachers" onclick="goPage('teachers')">
+        <span class="nav-icon">👩‍🏫</span> 선생님 관리
+      </a>
+      <a class="nav-link" data-page="students" onclick="goPage('students')">
+        <span class="nav-icon">👥</span> 학생 목록
+      </a>
+      <a class="nav-link admin-only" data-page="stats" onclick="goPage('stats')">
+        <span class="nav-icon">📊</span> 월별 통계/정산
+      </a>
+      <a class="nav-link admin-only" data-page="settings" onclick="goPage('settings')">
+        <span class="nav-icon">⚙️</span> 설정
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <span class="version-tag">v1.0.0</span>
+    </div>
+  </div>
+
+  <!-- PAGE: SCHEDULE -->
+  <div class="page active" id="page-schedule">
+    <!-- Week Nav -->
+    <div class="week-nav">
+      <button class="week-arrow" onclick="changeWeek(-1)">‹</button>
+      <div class="week-label" id="weekLabel"></div>
+      <button class="week-arrow" onclick="changeWeek(1)">›</button>
+    </div>
+    <!-- Day Tabs -->
+    <div class="day-tabs" id="dayTabs"></div>
+    <!-- Teacher Filter (admin sees all, teacher sees only own) -->
+    <div class="teacher-filter" id="teacherFilter"></div>
+    <!-- Stats -->
+    <div class="day-stats" id="dayStats"></div>
+    <!-- List -->
+    <div class="schedule-list" id="scheduleList"></div>
+    <!-- FAB -->
+    <button class="fab" id="fabAdd" onclick="openLessonModal()">+</button>
+  </div>
+
+  <!-- PAGE: MONTHLY -->
+  <div class="page" id="page-monthly">
+    <div class="monthly-nav">
+      <button class="week-arrow" onclick="changeMonth(-1)">‹</button>
+      <div class="week-label" id="monthLabel"></div>
+      <button class="week-arrow" onclick="changeMonth(1)">›</button>
+    </div>
+    <div class="monthly-grid" id="monthlyGrid"></div>
+    <div class="monthly-detail" id="monthlyDetail"></div>
+  </div>
+
+  <!-- PAGE: TEACHERS -->
+  <div class="page" id="page-teachers">
+    <div class="page-header">
+      <h2 class="page-h2">선생님 관리</h2>
+      <button class="btn btn-sm btn-primary" onclick="openTeacherModal()">+ 추가</button>
+    </div>
+    <div class="teacher-list" id="teacherList"></div>
+  </div>
+
+  <!-- PAGE: STUDENTS -->
+  <div class="page" id="page-students">
+    <div class="page-header">
+      <h2 class="page-h2">학생 목록</h2>
+      <button class="btn btn-sm btn-primary" onclick="openStudentModal()">+ 추가</button>
+    </div>
+    <div class="search-bar-wrap">
+      <input class="search-input" id="studentSearch" placeholder="🔍  이름, 전화번호 검색" oninput="renderStudentList()">
+    </div>
+    <div class="student-list" id="studentList"></div>
+  </div>
+
+  <!-- PAGE: STATS -->
+  <div class="page" id="page-stats">
+    <div class="stats-month-nav">
+      <button class="week-arrow" onclick="changeStatsMonth(-1)">‹</button>
+      <div class="week-label" id="statsMonthLabel"></div>
+      <button class="week-arrow" onclick="changeStatsMonth(1)">›</button>
+    </div>
+    <div id="statsContent"></div>
+  </div>
+
+  <!-- PAGE: SETTINGS -->
+  <div class="page" id="page-settings">
+    <div class="page-header"><h2 class="page-h2">설정</h2></div>
+    <div class="settings-list" id="settingsList"></div>
+  </div>
+
+</div><!-- /appScreen -->
+
+<!-- ============ MODALS ============ -->
+
+<!-- Lesson Modal -->
+<div class="modal-backdrop" id="lessonModal" onclick="closeMB(event,'lessonModal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <h3 class="modal-title" id="lessonModalTitle">수업 추가</h3>
+      <button class="modal-x" onclick="closeModal('lessonModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">학생 선택</label>
+          <select class="form-select" id="lf_student">
+            <option value="">-- 학생 선택 --</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">또는 직접 입력</label>
+          <input class="form-input" id="lf_studentName" placeholder="학생 이름">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">담당 선생님</label>
+          <select class="form-select" id="lf_teacher"></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">요일</label>
+          <select class="form-select" id="lf_day">
+            <option value="0">월요일</option>
+            <option value="1">화요일</option>
+            <option value="2">수요일</option>
+            <option value="3">목요일</option>
+            <option value="4">금요일</option>
+            <option value="5">토요일</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">시작 시간</label>
+          <input class="form-input" id="lf_time" type="time" value="09:30">
+        </div>
+        <div class="form-group">
+          <label class="form-label">수업 길이</label>
+          <select class="form-select" id="lf_duration">
+            <option value="30">30분</option>
+            <option value="50" selected>50분</option>
+            <option value="60">60분</option>
+            <option value="90">90분</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">메모</label>
+        <input class="form-input" id="lf_memo" placeholder="특이사항 (선택)">
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeModal('lessonModal')">취소</button>
+        <button class="btn btn-primary" onclick="saveLesson()">저장</button>
+      </div>
+      <div id="lf_deleteRow" style="display:none; margin-top:10px;">
+        <button class="btn btn-danger btn-full" onclick="deleteLesson()">🗑 수업 삭제</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Teacher Modal -->
+<div class="modal-backdrop" id="teacherModal" onclick="closeMB(event,'teacherModal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <h3 class="modal-title" id="teacherModalTitle">선생님 추가</h3>
+      <button class="modal-x" onclick="closeModal('teacherModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">이름 *</label>
+          <input class="form-input" id="tf_name" placeholder="이름">
+        </div>
+        <div class="form-group">
+          <label class="form-label">전화번호</label>
+          <input class="form-input" id="tf_phone" placeholder="010-0000-0000" type="tel">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">로그인 이메일 *</label>
+          <input class="form-input" id="tf_email" placeholder="teacher@email.com" type="email">
+        </div>
+        <div class="form-group">
+          <label class="form-label">초기 비밀번호 *</label>
+          <input class="form-input" id="tf_password" placeholder="8자 이상" type="password">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">색상 테마</label>
+        <div class="color-picker" id="tf_colorPicker"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">메모</label>
+        <input class="form-input" id="tf_memo" placeholder="특이사항 (선택)">
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeModal('teacherModal')">취소</button>
+        <button class="btn btn-primary" onclick="saveTeacher()">저장</button>
+      </div>
+      <div id="tf_deleteRow" style="display:none; margin-top:10px;">
+        <button class="btn btn-danger btn-full" onclick="deleteTeacher()">🗑 선생님 삭제</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Student Modal -->
+<div class="modal-backdrop" id="studentModal" onclick="closeMB(event,'studentModal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <h3 class="modal-title" id="studentModalTitle">학생 추가</h3>
+      <button class="modal-x" onclick="closeModal('studentModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">이름 *</label>
+          <input class="form-input" id="sf_name" placeholder="학생 이름">
+        </div>
+        <div class="form-group">
+          <label class="form-label">전화번호</label>
+          <input class="form-input" id="sf_phone" placeholder="010-0000-0000" type="tel">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">보호자 이름</label>
+          <input class="form-input" id="sf_parentName" placeholder="(선택)">
+        </div>
+        <div class="form-group">
+          <label class="form-label">보호자 연락처</label>
+          <input class="form-input" id="sf_parentPhone" placeholder="010-0000-0000" type="tel">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">담당 선생님</label>
+          <select class="form-select" id="sf_teacher"></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">수강료</label>
+          <input class="form-input" id="sf_fee" placeholder="0" type="number">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">메모</label>
+        <input class="form-input" id="sf_memo" placeholder="특이사항 (선택)">
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeModal('studentModal')">취소</button>
+        <button class="btn btn-primary" onclick="saveStudent()">저장</button>
+      </div>
+      <div id="sf_deleteRow" style="display:none; margin-top:10px;">
+        <button class="btn btn-danger btn-full" onclick="deleteStudent()">🗑 학생 삭제</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Detail Modal -->
+<div class="modal-backdrop" id="detailModal" onclick="closeMB(event,'detailModal')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-body" id="detailContent"></div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Firebase SDK -->
+<script type="module" src="firebase-config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
