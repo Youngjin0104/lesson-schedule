@@ -9,194 +9,176 @@
 <meta name="apple-mobile-web-app-title" content="레슨스케줄">
 <link rel="manifest" href="manifest.json">
 <title>레슨 스케줄 관리</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<!-- ========== LOGIN SCREEN ========== -->
-<div id="loginScreen" class="screen active">
-  <div class="login-bg">
-    <div class="login-blob b1"></div>
-    <div class="login-blob b2"></div>
-    <div class="login-blob b3"></div>
+<!-- ══════════════ LOGIN ══════════════ -->
+<div id="S_login" class="screen">
+  <div class="login-blobs">
+    <div class="blob b1"></div>
+    <div class="blob b2"></div>
+    <div class="blob b3"></div>
   </div>
   <div class="login-wrap">
     <div class="login-logo">
-      <div class="logo-icon">📋</div>
+      <div class="logo-emoji">📋</div>
       <h1 class="logo-title">레슨스케줄</h1>
       <p class="logo-sub">선생님 수업 관리 시스템</p>
     </div>
     <div class="login-card">
-      <div class="form-group">
-        <label class="form-label">이메일</label>
-        <input class="form-input" id="loginEmail" type="email" placeholder="example@email.com" autocomplete="email">
+      <div class="fg">
+        <label class="flabel">이메일</label>
+        <input class="finput" id="li_email" type="email" placeholder="example@email.com" autocomplete="email">
       </div>
-      <div class="form-group">
-        <label class="form-label">비밀번호</label>
-        <input class="form-input" id="loginPassword" type="password" placeholder="••••••••" autocomplete="current-password">
+      <div class="fg">
+        <label class="flabel">비밀번호</label>
+        <input class="finput" id="li_pw" type="password" placeholder="••••••••" autocomplete="current-password">
       </div>
-      <div id="loginError" class="error-msg" style="display:none"></div>
-      <button class="btn btn-primary btn-full" id="loginBtn" onclick="doLogin()">
-        <span>로그인</span>
-      </button>
+      <div id="li_err" class="err-msg" style="display:none"></div>
+      <button class="btn btn-primary w100" id="li_btn" onclick="doLogin()">로그인test</button>
     </div>
     <p class="login-hint">계정 문의: 관리자에게 연락하세요</p>
   </div>
 </div>
 
-<!-- ========== MAIN APP ========== -->
-<div id="appScreen" class="screen">
+<!-- ══════════════ APP ══════════════ -->
+<div id="S_app" class="screen" style="display:none">
 
-  <!-- TOP BAR -->
+  <!-- TOPBAR -->
   <div class="topbar">
-    <div class="topbar-left">
-      <button class="menu-btn" onclick="toggleSidebar()">☰</button>
-      <div class="topbar-title" id="pageTitle">스케줄</div>
+    <div class="tb-left">
+      <button class="icon-btn" onclick="openSidebar()">☰</button>
+      <span class="tb-title" id="tb_title">스케줄</span>
     </div>
-    <div class="topbar-right">
-      <div class="user-chip" id="userChip">
-        <span id="userRoleBadge" class="role-badge"></span>
-        <span id="userNameDisplay"></span>
+    <div class="tb-right">
+      <div class="user-chip">
+        <span id="uc_role" class="role-badge"></span>
+        <span id="uc_name"></span>
       </div>
-      <button class="icon-btn" onclick="doLogout()">🚪</button>
+      <button class="icon-btn" onclick="doLogout()" title="로그아웃">🚪</button>
     </div>
   </div>
+
+  <!-- SIDEBAR BACKDROP -->
+  <div id="sb_backdrop" class="sb-backdrop" onclick="closeSidebar()"></div>
 
   <!-- SIDEBAR -->
-  <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="closeSidebar()"></div>
-  <div class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-      <div class="sidebar-logo">📋 레슨스케줄</div>
-      <button class="sidebar-close" onclick="closeSidebar()">✕</button>
+  <div id="sidebar" class="sidebar">
+    <div class="sb-head">
+      <span class="sb-logo">📋 레슨스케줄</span>
+      <button class="icon-btn sm" onclick="closeSidebar()">✕</button>
     </div>
-    <div class="sidebar-user" id="sidebarUser"></div>
-    <nav class="sidebar-nav">
-      <a class="nav-link active" data-page="schedule" onclick="goPage('schedule')">
-        <span class="nav-icon">📅</span> 수업 스케줄
-      </a>
-      <a class="nav-link" data-page="monthly" onclick="goPage('monthly')">
-        <span class="nav-icon">📆</span> 월별 캘린더
-      </a>
-      <a class="nav-link admin-only" data-page="teachers" onclick="goPage('teachers')">
-        <span class="nav-icon">👩‍🏫</span> 선생님 관리
-      </a>
-      <a class="nav-link" data-page="students" onclick="goPage('students')">
-        <span class="nav-icon">👥</span> 학생 목록
-      </a>
-      <a class="nav-link admin-only" data-page="stats" onclick="goPage('stats')">
-        <span class="nav-icon">📊</span> 월별 통계/정산
-      </a>
-      <a class="nav-link admin-only" data-page="settings" onclick="goPage('settings')">
-        <span class="nav-icon">⚙️</span> 설정
-      </a>
+    <div class="sb-user" id="sb_user"></div>
+    <nav class="sb-nav">
+      <button class="snav-btn active" data-page="schedule"  onclick="goPage('schedule')">📅 수업 스케줄</button>
+      <button class="snav-btn"        data-page="monthly"   onclick="goPage('monthly')">📆 월별 캘린더</button>
+      <button class="snav-btn adm"    data-page="teachers"  onclick="goPage('teachers')">👩‍🏫 선생님 관리</button>
+      <button class="snav-btn"        data-page="students"  onclick="goPage('students')">👥 학생 목록</button>
+      <button class="snav-btn adm"    data-page="stats"     onclick="goPage('stats')">📊 통계/정산</button>
+      <button class="snav-btn adm"    data-page="settings"  onclick="goPage('settings')">⚙️ 설정</button>
     </nav>
-    <div class="sidebar-footer">
-      <span class="version-tag">v1.0.0</span>
-    </div>
+    <div class="sb-footer">v1.0.0</div>
   </div>
 
-  <!-- PAGE: SCHEDULE -->
-  <div class="page active" id="page-schedule">
-    <!-- Week Nav -->
-    <div class="week-nav">
-      <button class="week-arrow" onclick="changeWeek(-1)">‹</button>
-      <div class="week-label" id="weekLabel"></div>
-      <button class="week-arrow" onclick="changeWeek(1)">›</button>
+  <!-- PAGE CONTAINER -->
+  <div class="page-wrap">
+
+    <!-- ── 스케줄 ── -->
+    <div class="page" id="P_schedule">
+      <div class="week-nav">
+        <button class="arrow-btn" onclick="changeWeek(-1)">‹</button>
+        <span class="week-lbl" id="wk_label"></span>
+        <button class="arrow-btn" onclick="changeWeek(1)">›</button>
+      </div>
+      <div class="day-tabs" id="day_tabs"></div>
+      <div class="t-chips" id="t_chips"></div>
+      <div class="day-stats" id="day_stats"></div>
+      <div class="lesson-list" id="lesson_list"></div>
+      <button class="fab" onclick="openLessonModal(null)">+</button>
     </div>
-    <!-- Day Tabs -->
-    <div class="day-tabs" id="dayTabs"></div>
-    <!-- Teacher Filter (admin sees all, teacher sees only own) -->
-    <div class="teacher-filter" id="teacherFilter"></div>
-    <!-- Stats -->
-    <div class="day-stats" id="dayStats"></div>
-    <!-- List -->
-    <div class="schedule-list" id="scheduleList"></div>
-    <!-- FAB -->
-    <button class="fab" id="fabAdd" onclick="openLessonModal()">+</button>
-  </div>
 
-  <!-- PAGE: MONTHLY -->
-  <div class="page" id="page-monthly">
-    <div class="monthly-nav">
-      <button class="week-arrow" onclick="changeMonth(-1)">‹</button>
-      <div class="week-label" id="monthLabel"></div>
-      <button class="week-arrow" onclick="changeMonth(1)">›</button>
+    <!-- ── 월별 캘린더 ── -->
+    <div class="page" id="P_monthly" style="display:none">
+      <div class="week-nav">
+        <button class="arrow-btn" onclick="changeMonth(-1)">‹</button>
+        <span class="week-lbl" id="mo_label"></span>
+        <button class="arrow-btn" onclick="changeMonth(1)">›</button>
+      </div>
+      <div id="cal_grid" class="cal-grid"></div>
+      <div id="cal_detail" class="cal-detail"></div>
     </div>
-    <div class="monthly-grid" id="monthlyGrid"></div>
-    <div class="monthly-detail" id="monthlyDetail"></div>
-  </div>
 
-  <!-- PAGE: TEACHERS -->
-  <div class="page" id="page-teachers">
-    <div class="page-header">
-      <h2 class="page-h2">선생님 관리</h2>
-      <button class="btn btn-sm btn-primary" onclick="openTeacherModal()">+ 추가</button>
+    <!-- ── 선생님 관리 ── -->
+    <div class="page" id="P_teachers" style="display:none">
+      <div class="ph">
+        <h2 class="ph-title">선생님 관리</h2>
+        <button class="btn btn-primary sm" onclick="openTeacherModal(null)">+ 추가</button>
+      </div>
+      <div id="teacher_list" class="card-list"></div>
     </div>
-    <div class="teacher-list" id="teacherList"></div>
-  </div>
 
-  <!-- PAGE: STUDENTS -->
-  <div class="page" id="page-students">
-    <div class="page-header">
-      <h2 class="page-h2">학생 목록</h2>
-      <button class="btn btn-sm btn-primary" onclick="openStudentModal()">+ 추가</button>
+    <!-- ── 학생 목록 ── -->
+    <div class="page" id="P_students" style="display:none">
+      <div class="ph">
+        <h2 class="ph-title">학생 목록</h2>
+        <button class="btn btn-primary sm" onclick="openStudentModal(null)">+ 추가</button>
+      </div>
+      <div class="search-wrap">
+        <input class="search-input" id="stu_search" placeholder="🔍  이름 · 전화번호 검색" oninput="renderStudents()">
+      </div>
+      <div id="student_list" class="card-list"></div>
     </div>
-    <div class="search-bar-wrap">
-      <input class="search-input" id="studentSearch" placeholder="🔍  이름, 전화번호 검색" oninput="renderStudentList()">
+
+    <!-- ── 통계/정산 ── -->
+    <div class="page" id="P_stats" style="display:none">
+      <div class="week-nav">
+        <button class="arrow-btn" onclick="changeStatsMonth(-1)">‹</button>
+        <span class="week-lbl" id="st_label"></span>
+        <button class="arrow-btn" onclick="changeStatsMonth(1)">›</button>
+      </div>
+      <div id="stats_content" class="stats-wrap"></div>
     </div>
-    <div class="student-list" id="studentList"></div>
-  </div>
 
-  <!-- PAGE: STATS -->
-  <div class="page" id="page-stats">
-    <div class="stats-month-nav">
-      <button class="week-arrow" onclick="changeStatsMonth(-1)">‹</button>
-      <div class="week-label" id="statsMonthLabel"></div>
-      <button class="week-arrow" onclick="changeStatsMonth(1)">›</button>
+    <!-- ── 설정 ── -->
+    <div class="page" id="P_settings" style="display:none">
+      <div class="ph"><h2 class="ph-title">설정</h2></div>
+      <div id="settings_list"></div>
     </div>
-    <div id="statsContent"></div>
-  </div>
 
-  <!-- PAGE: SETTINGS -->
-  <div class="page" id="page-settings">
-    <div class="page-header"><h2 class="page-h2">설정</h2></div>
-    <div class="settings-list" id="settingsList"></div>
-  </div>
+  </div><!-- /page-wrap -->
+</div><!-- /S_app -->
 
-</div><!-- /appScreen -->
+<!-- ══════════════ MODALS ══════════════ -->
 
-<!-- ============ MODALS ============ -->
-
-<!-- Lesson Modal -->
-<div class="modal-backdrop" id="lessonModal" onclick="closeMB(event,'lessonModal')">
+<!-- 수업 모달 -->
+<div class="modal-back" id="M_lesson">
   <div class="modal-sheet">
-    <div class="modal-handle"></div>
-    <div class="modal-header">
-      <h3 class="modal-title" id="lessonModalTitle">수업 추가</h3>
-      <button class="modal-x" onclick="closeModal('lessonModal')">✕</button>
+    <div class="m-handle"></div>
+    <div class="m-head">
+      <h3 id="M_lesson_title" class="m-title">수업 추가</h3>
+      <button class="icon-btn sm" onclick="closeModal('M_lesson')">✕</button>
     </div>
-    <div class="modal-body">
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">학생 선택</label>
-          <select class="form-select" id="lf_student">
-            <option value="">-- 학생 선택 --</option>
-          </select>
+    <div class="m-body">
+      <div class="frow">
+        <div class="fg">
+          <label class="flabel">학생 선택</label>
+          <select class="fselect" id="lf_stu"></select>
         </div>
-        <div class="form-group">
-          <label class="form-label">또는 직접 입력</label>
-          <input class="form-input" id="lf_studentName" placeholder="학생 이름">
+        <div class="fg">
+          <label class="flabel">직접 입력</label>
+          <input class="finput" id="lf_stuname" placeholder="이름 직접 입력">
         </div>
       </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">담당 선생님</label>
-          <select class="form-select" id="lf_teacher"></select>
+      <div class="frow">
+        <div class="fg">
+          <label class="flabel">담당 선생님</label>
+          <select class="fselect" id="lf_teacher"></select>
         </div>
-        <div class="form-group">
-          <label class="form-label">요일</label>
-          <select class="form-select" id="lf_day">
+        <div class="fg">
+          <label class="flabel">요일</label>
+          <select class="fselect" id="lf_day">
             <option value="0">월요일</option>
             <option value="1">화요일</option>
             <option value="2">수요일</option>
@@ -206,14 +188,14 @@
           </select>
         </div>
       </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">시작 시간</label>
-          <input class="form-input" id="lf_time" type="time" value="09:30">
+      <div class="frow">
+        <div class="fg">
+          <label class="flabel">시작 시간</label>
+          <input class="finput" id="lf_time" type="time" value="09:30">
         </div>
-        <div class="form-group">
-          <label class="form-label">수업 길이</label>
-          <select class="form-select" id="lf_duration">
+        <div class="fg">
+          <label class="flabel">수업 길이</label>
+          <select class="fselect" id="lf_dur">
             <option value="30">30분</option>
             <option value="50" selected>50분</option>
             <option value="60">60분</option>
@@ -221,136 +203,135 @@
           </select>
         </div>
       </div>
-      <div class="form-group">
-        <label class="form-label">메모</label>
-        <input class="form-input" id="lf_memo" placeholder="특이사항 (선택)">
+      <div class="fg">
+        <label class="flabel">메모</label>
+        <input class="finput" id="lf_memo" placeholder="특이사항 (선택)">
       </div>
-      <div class="modal-actions">
-        <button class="btn btn-ghost" onclick="closeModal('lessonModal')">취소</button>
+      <div class="m-actions">
+        <button class="btn btn-ghost" onclick="closeModal('M_lesson')">취소</button>
         <button class="btn btn-primary" onclick="saveLesson()">저장</button>
       </div>
-      <div id="lf_deleteRow" style="display:none; margin-top:10px;">
-        <button class="btn btn-danger btn-full" onclick="deleteLesson()">🗑 수업 삭제</button>
+      <div id="lf_del" style="display:none;margin-top:8px">
+        <button class="btn btn-danger w100" onclick="deleteLesson()">🗑 수업 삭제</button>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Teacher Modal -->
-<div class="modal-backdrop" id="teacherModal" onclick="closeMB(event,'teacherModal')">
+<!-- 선생님 모달 -->
+<div class="modal-back" id="M_teacher">
   <div class="modal-sheet">
-    <div class="modal-handle"></div>
-    <div class="modal-header">
-      <h3 class="modal-title" id="teacherModalTitle">선생님 추가</h3>
-      <button class="modal-x" onclick="closeModal('teacherModal')">✕</button>
+    <div class="m-handle"></div>
+    <div class="m-head">
+      <h3 id="M_teacher_title" class="m-title">선생님 추가</h3>
+      <button class="icon-btn sm" onclick="closeModal('M_teacher')">✕</button>
     </div>
-    <div class="modal-body">
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">이름 *</label>
-          <input class="form-input" id="tf_name" placeholder="이름">
+    <div class="m-body">
+      <div class="frow">
+        <div class="fg">
+          <label class="flabel">이름 *</label>
+          <input class="finput" id="tf_name" placeholder="홍길동">
         </div>
-        <div class="form-group">
-          <label class="form-label">전화번호</label>
-          <input class="form-input" id="tf_phone" placeholder="010-0000-0000" type="tel">
-        </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">로그인 이메일 *</label>
-          <input class="form-input" id="tf_email" placeholder="teacher@email.com" type="email">
-        </div>
-        <div class="form-group">
-          <label class="form-label">초기 비밀번호 *</label>
-          <input class="form-input" id="tf_password" placeholder="8자 이상" type="password">
+        <div class="fg">
+          <label class="flabel">전화번호</label>
+          <input class="finput" id="tf_phone" type="tel" placeholder="010-0000-0000">
         </div>
       </div>
-      <div class="form-group">
-        <label class="form-label">색상 테마</label>
-        <div class="color-picker" id="tf_colorPicker"></div>
+      <div class="frow">
+        <div class="fg">
+          <label class="flabel">이메일 (로그인용) *</label>
+          <input class="finput" id="tf_email" type="email" placeholder="teacher@email.com">
+        </div>
+        <div class="fg">
+          <label class="flabel">초기 비밀번호</label>
+          <input class="finput" id="tf_pw" type="password" placeholder="8자 이상">
+        </div>
       </div>
-      <div class="form-group">
-        <label class="form-label">메모</label>
-        <input class="form-input" id="tf_memo" placeholder="특이사항 (선택)">
+      <div class="fg">
+        <label class="flabel">색상</label>
+        <div class="color-row" id="tf_colors"></div>
       </div>
-      <div class="modal-actions">
-        <button class="btn btn-ghost" onclick="closeModal('teacherModal')">취소</button>
+      <div class="fg">
+        <label class="flabel">메모</label>
+        <input class="finput" id="tf_memo" placeholder="특이사항 (선택)">
+      </div>
+      <div class="m-actions">
+        <button class="btn btn-ghost" onclick="closeModal('M_teacher')">취소</button>
         <button class="btn btn-primary" onclick="saveTeacher()">저장</button>
       </div>
-      <div id="tf_deleteRow" style="display:none; margin-top:10px;">
-        <button class="btn btn-danger btn-full" onclick="deleteTeacher()">🗑 선생님 삭제</button>
+      <div id="tf_del" style="display:none;margin-top:8px">
+        <button class="btn btn-danger w100" onclick="deleteTeacher()">🗑 선생님 삭제</button>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Student Modal -->
-<div class="modal-backdrop" id="studentModal" onclick="closeMB(event,'studentModal')">
+<!-- 학생 모달 -->
+<div class="modal-back" id="M_student">
   <div class="modal-sheet">
-    <div class="modal-handle"></div>
-    <div class="modal-header">
-      <h3 class="modal-title" id="studentModalTitle">학생 추가</h3>
-      <button class="modal-x" onclick="closeModal('studentModal')">✕</button>
+    <div class="m-handle"></div>
+    <div class="m-head">
+      <h3 id="M_student_title" class="m-title">학생 추가</h3>
+      <button class="icon-btn sm" onclick="closeModal('M_student')">✕</button>
     </div>
-    <div class="modal-body">
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">이름 *</label>
-          <input class="form-input" id="sf_name" placeholder="학생 이름">
+    <div class="m-body">
+      <div class="frow">
+        <div class="fg">
+          <label class="flabel">이름 *</label>
+          <input class="finput" id="sf_name" placeholder="홍길동">
         </div>
-        <div class="form-group">
-          <label class="form-label">전화번호</label>
-          <input class="form-input" id="sf_phone" placeholder="010-0000-0000" type="tel">
-        </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">보호자 이름</label>
-          <input class="form-input" id="sf_parentName" placeholder="(선택)">
-        </div>
-        <div class="form-group">
-          <label class="form-label">보호자 연락처</label>
-          <input class="form-input" id="sf_parentPhone" placeholder="010-0000-0000" type="tel">
+        <div class="fg">
+          <label class="flabel">학생 전화번호</label>
+          <input class="finput" id="sf_phone" type="tel" placeholder="010-0000-0000">
         </div>
       </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">담당 선생님</label>
-          <select class="form-select" id="sf_teacher"></select>
+      <div class="frow">
+        <div class="fg">
+          <label class="flabel">보호자 이름</label>
+          <input class="finput" id="sf_pname" placeholder="(선택)">
         </div>
-        <div class="form-group">
-          <label class="form-label">수강료</label>
-          <input class="form-input" id="sf_fee" placeholder="0" type="number">
+        <div class="fg">
+          <label class="flabel">보호자 연락처</label>
+          <input class="finput" id="sf_pphone" type="tel" placeholder="010-0000-0000">
         </div>
       </div>
-      <div class="form-group">
-        <label class="form-label">메모</label>
-        <input class="form-input" id="sf_memo" placeholder="특이사항 (선택)">
+      <div class="frow">
+        <div class="fg">
+          <label class="flabel">담당 선생님</label>
+          <select class="fselect" id="sf_teacher"></select>
+        </div>
+        <div class="fg">
+          <label class="flabel">월 수강료 (원)</label>
+          <input class="finput" id="sf_fee" type="number" placeholder="0">
+        </div>
       </div>
-      <div class="modal-actions">
-        <button class="btn btn-ghost" onclick="closeModal('studentModal')">취소</button>
+      <div class="fg">
+        <label class="flabel">메모</label>
+        <input class="finput" id="sf_memo" placeholder="특이사항 (선택)">
+      </div>
+      <div class="m-actions">
+        <button class="btn btn-ghost" onclick="closeModal('M_student')">취소</button>
         <button class="btn btn-primary" onclick="saveStudent()">저장</button>
       </div>
-      <div id="sf_deleteRow" style="display:none; margin-top:10px;">
-        <button class="btn btn-danger btn-full" onclick="deleteStudent()">🗑 학생 삭제</button>
+      <div id="sf_del" style="display:none;margin-top:8px">
+        <button class="btn btn-danger w100" onclick="deleteStudent()">🗑 학생 삭제</button>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Detail Modal -->
-<div class="modal-backdrop" id="detailModal" onclick="closeMB(event,'detailModal')">
+<!-- 상세 모달 -->
+<div class="modal-back" id="M_detail">
   <div class="modal-sheet">
-    <div class="modal-handle"></div>
-    <div class="modal-body" id="detailContent"></div>
+    <div class="m-handle"></div>
+    <div id="M_detail_body" class="m-body"></div>
   </div>
 </div>
 
 <!-- Toast -->
-<div class="toast" id="toast"></div>
+<div id="toast" class="toast"></div>
 
-<!-- Firebase SDK -->
-<script type="module" src="firebase-config.js"></script>
-<script src="app.js"></script>
+<!-- 모든 JS를 단일 ES module로 로드 -->
+<script type="module" src="app.js"></script>
 </body>
 </html>
