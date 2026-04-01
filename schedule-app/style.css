@@ -113,12 +113,12 @@ a { color:inherit; text-decoration:none; }
 .arrow-btn:active { transform:scale(.88); }
 
 /* ── DAY TABS ────────────────────────────── */
-.day-tabs { display:flex; gap:6px; padding:0 16px 10px; overflow-x:auto; scrollbar-width:none; }
-.day-tabs::-webkit-scrollbar { display:none; }
+.day-tabs { display:flex; gap:4px; padding:0 12px 10px;}
+/* .day-tabs::-webkit-scrollbar { display:none; } */
 .dtab {
-  flex:0 0 auto; min-width:50px; display:flex; flex-direction:column; align-items:center;
+  flex:1; min-width:54px; display:flex; flex-direction:column; align-items:center;
   padding:7px 10px; border-radius:12px; border:1.5px solid var(--bd); background:var(--sf);
-  cursor:pointer; transition:all .18s;
+  cursor:pointer; transition:all .18s; min-width:0;
 }
 .dtab .dow  { font-size:10px; font-weight:600; color:var(--tx3); margin-bottom:2px; letter-spacing:.3px; }
 .dtab .date { font-size:16px; font-weight:700; }
@@ -127,6 +127,11 @@ a { color:inherit; text-decoration:none; }
 .dtab.active .dow, .dtab.active .cnt { color:rgba(0,0,0,.5); }
 .dtab.today:not(.active) { border-color:var(--gr); }
 .dtab:active { transform:scale(.9); }
+
+/* 기존 active 및 today 스타일 유지 */
+.dtab.active { background: var(--ac); border-color: var(--ac); color: #000; }
+.dtab.active .dow, .dtab.active .cnt { color: rgba(0,0,0,.5); }
+.dtab.today:not(.active) { border-color: var(--gr); }
 
 /* ── TEACHER CHIPS ───────────────────────── */
 .t-chips { display:flex; gap:7px; padding:0 16px 10px; overflow-x:auto; scrollbar-width:none; }
@@ -307,7 +312,7 @@ a { color:inherit; text-decoration:none; }
 .finput, .fselect {
   width:100%; background:var(--sf2); border:1.5px solid var(--bd);
   color:var(--tx); padding:11px 12px; border-radius:10px; outline:none;
-  font-size:14px; font-weight:500; transition:border-color .15s; -webkit-appearance:none;
+  font-size:14px; font-weight:500; transition:border-color .15s; -webkit-appearance: none; appearance: none;
 }
 .finput::placeholder { color:var(--tx3); }
 .finput:focus, .fselect:focus { border-color:var(--ac); }

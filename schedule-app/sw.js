@@ -1,5 +1,5 @@
 // sw.js — Service Worker for PWA
-const CACHE = 'lesson-schedule-v1';
+const CACHE = 'lesson-schedule-v1.1';
 const ASSETS = [
   '/',
   '/index.html',

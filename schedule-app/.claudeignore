@@ -1,0 +1,30 @@
+# 의존성 패키지 (가장 중요)
+node_modules/
+vendor/
+
+# 빌드 결과물
+dist/
+build/
+out/
+.next/
+
+# 환경 변수 및 비밀키 (보안)
+.env
+.env.*
+*.pem
+*.key
+
+# 로그 및 임시 파일
+*.log
+.DS_Store
+.tmp/
+
+# 가상 환경 (Python 등)
+venv/
+.venv/
+
+# 대용량 미디어 파일
+*.mp4
+*.zip
+*.png
+*.jpg

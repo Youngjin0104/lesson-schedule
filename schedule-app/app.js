@@ -9,7 +9,7 @@ import {
 // ═══════════════════════════════════════════
 // CONSTANTS
 // ═══════════════════════════════════════════
-const DAYS   = ['월','화','수','목','금','토'];
+const DAYS   = ['월','화','수','목','금','토', '일'];
 const COLORS = ['#58a6ff','#f0984a','#3fb950','#bc8cff','#f85149','#39d3d3','#e3a645','#ff79c6'];
 
 // ═══════════════════════════════════════════
@@ -22,7 +22,7 @@ let lessons   = [];
 let unsubs    = [];     // realtime listener 해제 함수들
 
 // 스케줄 뷰
-let selDayIdx  = (() => { const d = new Date().getDay(); return d === 0 ? 0 : d - 1; })(); // 0=월
+let selDayIdx  = (() => { const d = (new Date().getDay() + 6) % 7; return d === 0 ? 0 : d - 1; })(); // 0=월
 let weekOff    = 0;
 let filterTid  = null;  // null = 전체
 
@@ -185,7 +185,7 @@ function getWeekDates(off = 0) {
   const dow = now.getDay();                      // 0=일
   const mon = new Date(now);
   mon.setDate(now.getDate() - (dow === 0 ? 6 : dow - 1) + off * 7);
-  return Array.from({ length: 6 }, (_, i) => {
+  return Array.from({ length: 7 }, (_, i) => {
     const d = new Date(mon);
     d.setDate(mon.getDate() + i);
     return d;
@@ -203,7 +203,7 @@ function renderWeekNav() {
   const dates = getWeekDates(weekOff);
   const y = dates[0].getFullYear();
   const m1 = dates[0].getMonth() + 1;
-  const m2 = dates[5].getMonth() + 1;
+  const m2 = dates[6].getMonth() + 1;
   document.getElementById('wk_label').textContent =
     `${y}년 ${m1}월${m1 !== m2 ? '~' + m2 + '월' : ''}`;
 }
@@ -678,7 +678,7 @@ function renderSettings() {
     </div>
     <div class="set-section">정보</div>
     <div class="set-item">
-      <div class="si-l"><span>ℹ️</span><span>버전</span></div><span style="font-size:12px;color:var(--tx2)">v1.0.0</span>
+      <div class="si-l"><span>ℹ️</span><span>버전</span></div><span style="font-size:12px;color:var(--tx2)">v1.0.1</span>
     </div>`;
 }
 
@@ -735,4 +735,21 @@ function toast(msg) {
 // ═══════════════════════════════════════════
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+
+// Service Worker 등록 시 업데이트 감지
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').then(reg => {
+    reg.addEventListener('updatefound', () => {
+      const newWorker = reg.installing;
+      newWorker.addEventListener('statechange', () => {
+        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+          // 새 버전이 설치됨 -> 사용자에게 알림 또는 강제 새로고침
+          if (confirm('새로운 버전이 있습니다. 업데이트하시겠습니까?')) {
+            window.location.reload();
+          }
+        }
+      });
+    });
+  });
 }
