@@ -22,7 +22,7 @@ let lessons   = [];
 let unsubs    = [];     // realtime listener 해제 함수들
 
 // 스케줄 뷰
-let selDayIdx  = (() => { const d = (new Date().getDay() + 6) % 7; return d === 0 ? 0 : d - 1; })(); // 0=월
+let selDayIdx  = (new Date().getDay() + 6) % 7; // 0=월
 let weekOff    = 0;
 let filterTid  = null;  // null = 전체
 
@@ -37,6 +37,12 @@ let stOff      = 0;
 let editLesson  = null;
 let editTeacher = null;
 let editStudent = null;
+
+// helper: 현재 선택된 날짜를 "YYYY-MM-DD" 문자열로 반환
+function getSelDateStr() {
+  const dates = getWeekDates(weekOff);
+  return dates[selDayIdx].toLocaleDateString('sv-SE').split('T')[0];
+}
 
 // ═══════════════════════════════════════════
 // BOOT
@@ -54,8 +60,19 @@ fbOnAuth(async (user) => {
 async function initUser(uid) {
   let profile = await fbGetUser(uid);
   if (!profile) {
-    profile = { name: '관리자', role: 'admin', color: COLORS[0], email: '' };
+    // 1. 진짜 처음 로그인한 유저인 경우 (가입)
+    const user = auth.currentUser; // Firebase Auth 객체에서 기본 정보 추출
+    
+    // 신규 유저의 기본값 설정 (대표님은 이미 DB에 있으므로 이 블록을 타지 않아야 함)
+    profile = { 
+      name: user.displayName || '선생님', 
+      role: 'teacher', // 기본값은 teacher로 설정
+      color: COLORS[0], 
+      email: user.email || '' 
+    };
+    
     await fbSetUser(uid, profile);
+    // 방금 저장한 데이터를 다시 확정적으로 가져옴
     profile = await fbGetUser(uid);
   }
   me = { uid, ...profile };
@@ -70,7 +87,12 @@ async function loadData() {
   // 기존 리스너 해제 후 재등록
   unsubs.forEach(f => f());
   unsubs = [
-    fbWatchUsers(data => { teachers = data.filter(x => x.role !== 'admin'); refresh(); }),
+    // fbWatchUsers(data => { teachers = data.filter(x => x.role !== 'admin'); refresh(); }),
+    fbWatchUsers(data => { teachers = data.filter(u => u.role === 'admin' || u.role === 'teacher')
+      .map(u => ({
+          ...u, 
+          displayName: u.role === 'admin' ? '대표' : u.name 
+    })); refresh(); }),
     fbWatchStudents(data => { students = data; refresh(); }),
     fbWatchLessons(data => { lessons = data; refresh(); }),
   ];
@@ -214,9 +236,10 @@ function renderDayTabs() {
   const el    = document.getElementById('day_tabs');
   el.innerHTML = '';
   dates.forEach((d, i) => {
+    const dateStr = d.toLocaleDateString('sv-SE').split('T')[0];
     const isTd  = d.toDateString() === today.toDateString();
     const isAct = i === selDayIdx;
-    const cnt   = lessons.filter(l => l.day === i && (!filterTid || l.teacherId === filterTid)).length;
+    const cnt   = lessons.filter(l => l.date === dateStr && (!filterTid || l.teacherId === filterTid)).length;
     const div   = document.createElement('div');
     div.className = 'dtab' + (isAct ? ' active' : '') + (isTd && !isAct ? ' today' : '');
     div.innerHTML = `<span class="dow">${DAYS[i]}</span><span class="date">${d.getDate()}</span><span class="cnt">${cnt || ''}</span>`;
@@ -248,12 +271,46 @@ function renderTChips() {
 }
 
 // ═══════════════════════════════════════════
+// 지난주 스케줄 불러오기
+// ═══════════════════════════════════════════
+
+window.copyLastWeek = async function() {
+  const targetDateObj = new Date(getSelDateStr());
+  const lastWeekDateObj = new Date(targetDateObj);
+  lastWeekDateObj.setDate(targetDateObj.getDate() - 7);
+  const lastWeekStr = lastWeekDateObj.toLocaleDateString('sv-SE').split('T')[0];
+
+  const lastWeekLessons = lessons.filter(l => l.date === lastWeekStr);
+
+  if (lastWeekLessons.length === 0) {
+    toast('📂 지난주 해당 요일에 등록된 수업이 없습니다.');
+    return;
+  }
+
+  if (!confirm(`지난주 ${lastWeekStr}의 수업 ${lastWeekLessons.length}개를 오늘로 복사할까요?`)) return;
+
+  try {
+    const todayStr = getSelDateStr();
+    const promises = lastWeekLessons.map(l => {
+      const { id, ...newData } = l; // ID 제외하고 복사
+      newData.date = todayStr;      // 날짜만 오늘로 변경
+      return fbAddLesson(newData);
+    });
+    await Promise.all(promises);
+    toast(`✅ ${lastWeekLessons.length}개의 수업을 불러왔습니다.`);
+  } catch(e) {
+    toast('불러오기 실패: ' + e.message);
+  }
+};
+
+// ═══════════════════════════════════════════
 // SCHEDULE RENDER
 // ═══════════════════════════════════════════
 function renderSchedule() {
   // Stats
+  const targetDate = getSelDateStr();
   const statsEl = document.getElementById('day_stats');
-  const dayAll  = lessons.filter(l => l.day === selDayIdx);
+  const dayAll = lessons.filter(l => l.date === targetDate);
   if (me.role === 'admin') {
     statsEl.innerHTML = teachers.map(t => {
       const cnt = dayAll.filter(l => l.teacherId === t.id).length;
@@ -287,7 +344,7 @@ function renderSchedule() {
         <div style="position:absolute;left:0;top:0;bottom:0;width:4px;background:${color};border-radius:4px 0 0 4px"></div>
         <div class="lc-name">${l.studentName || ''}</div>
         <div class="lc-meta">
-          <span class="lc-badge" style="background:${color}22;color:${color}">${t.name || '미배정'}</span>
+          <span class="lc-badge" style="background:${color}22;color:${color}">${t.displayName || '미배정'}</span>
           <span class="lc-dur">${l.duration || 50}분</span>
         </div>
         ${l.memo ? `<div class="lc-memo">★ ${l.memo}</div>` : ''}
@@ -302,7 +359,8 @@ function renderSchedule() {
 window.openLessonModal = function(id) {
   editLesson = id;
   const l    = id ? lessons.find(x => x.id === id) : null;
-
+  
+  document.getElementById('lf_date_display').value = l ? l.date : getSelDateStr();
   document.getElementById('M_lesson_title').textContent = l ? '수업 수정' : '수업 추가';
   document.getElementById('lf_del').style.display       = l ? 'block' : 'none';
 
@@ -316,25 +374,75 @@ window.openLessonModal = function(id) {
   tSel.innerHTML = teachers.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
 
   if (l) {
-    stuSel.value                                            = l.studentId || '';
-    document.getElementById('lf_stuname').value            = l.studentId ? '' : (l.studentName || '');
-    tSel.value                                              = l.teacherId || '';
-    document.getElementById('lf_day').value                = String(l.day ?? selDayIdx);
-    document.getElementById('lf_time').value               = l.time || '09:30';
-    document.getElementById('lf_dur').value                = String(l.duration || 50);
-    document.getElementById('lf_memo').value               = l.memo || '';
+    // [수정 모드]
+    stuSel.value = l.studentId || '';
+    document.getElementById('lf_stuname').value = l.studentId ? '' : (l.studentName || '');
+    tSel.value = l.teacherId || '';
+    document.getElementById('lf_time').value = l.time || '09:30';
+    document.getElementById('lf_dur').value = String(l.duration || 50);
+    document.getElementById('lf_memo').value = l.memo || '';
   } else {
-    stuSel.value                                            = '';
-    document.getElementById('lf_stuname').value            = '';
-    tSel.value                                              = filterTid || (teachers[0]?.id || '');
-    document.getElementById('lf_day').value                = String(selDayIdx);
-    document.getElementById('lf_time').value               = '09:30';
-    document.getElementById('lf_dur').value                = '50';
-    document.getElementById('lf_memo').value               = '';
+    // [신규 추가 모드]
+    stuSel.value = '';
+    document.getElementById('lf_stuname').value = '';
+    // 1. 기본 선생님 설정 로직 개선
+    // 필터링된 선생님이 있으면 그분으로, 없으면 현재 로그인한 '나'를 기본값으로 시도
+    const myId = me ? me.uid : '';
+    const isMeTeacher = teachers.some(t => t.id === myId); // 내가 선생님 목록(대표포함)에 있는지 확인
+
+    if (filterTid) {
+      tSel.value = filterTid;
+    } else if (isMeTeacher) {
+      tSel.value = myId; // 대표든 강사든 목록에 있다면 본인을 기본값으로
+    } else {
+      tSel.value = teachers[0]?.id || '';
+    }
+    document.getElementById('lf_time').value = '09:30';
+    document.getElementById('lf_dur').value = '50';
+    document.getElementById('lf_memo').value = '';
     // 선생님 본인이면 자신으로 고정
     if (me.role !== 'admin') tSel.value = me.uid;
   }
+  // 학생 선택 상태에 따라 입력창 활성/비활성 처리
+  if (window.toggleStuInput) {
+    toggleStuInput();
+  }
   openModal('M_lesson');
+};
+
+// 수업 추가 시 직접입력 비활성화
+window.toggleStuInput = function() {
+  const stuSel = document.getElementById('lf_stu');
+  const stuInput = document.getElementById('lf_stuname');
+
+  if (stuSel.value !== "") {
+    // 학생이 선택되었다면: 입력창 비활성화 및 초기화
+    stuInput.value = "";
+    stuInput.disabled = true;
+    stuInput.style.background = "var(--sf)"; // 비활성 시 어두운 배경색
+    stuInput.style.opacity = "0.5";
+    stuInput.style.cursor = "not-allowed";
+    stuInput.placeholder = "학생 선택 시 입력 불가";
+  } else {
+    // 선택이 '학생 선택'으로 돌아갔다면: 입력창 활성화
+    stuInput.disabled = false;
+    stuInput.style.background = "var(--sf3)";
+    stuInput.style.opacity = "1";
+    stuInput.style.cursor = "text";
+    stuInput.placeholder = "이름 직접 입력";
+  }
+};
+
+// 반대로 직접 입력 중일 때는 선택 박스를 무효화 (선택사항)
+window.toggleStuSelect = function() {
+  const stuSel = document.getElementById('lf_stu');
+  const stuInput = document.getElementById('lf_stuname');
+  if (stuInput.value.trim() !== "") {
+    stuSel.value = "";
+    // 선택을 초기화했으므로 다시 입력창 상태를 활성화로 확정
+    stuInput.disabled = false;
+    stuInput.style.opacity = "1";
+  }
 };
 
 window.saveLesson = async function() {
@@ -348,7 +456,7 @@ window.saveLesson = async function() {
     studentId:   stu?.id || null,
     studentName: name,
     teacherId:   document.getElementById('lf_teacher').value,
-    day:         parseInt(document.getElementById('lf_day').value),
+    date:        document.getElementById('lf_date_display').value, // 요일(day) 대신 날짜(date) 저장
     time:        document.getElementById('lf_time').value,
     duration:    parseInt(document.getElementById('lf_dur').value),
     memo:        document.getElementById('lf_memo').value.trim(),
@@ -372,6 +480,12 @@ window.deleteLesson = async function() {
 window.openDetail = function(id) {
   const l = lessons.find(x => x.id === id);
   if (!l) return;
+
+  // 추가: l.date("YYYY-MM-DD")를 기반으로 요일 인덱스 계산
+  const dateObj = new Date(l.date);
+  const dayIdx = (dateObj.getDay() + 6) % 7; // 월요일=0, ... 일요일=6
+  const dayName = DAYS[dayIdx];
+
   const t     = teachers.find(x => x.id === l.teacherId) || {};
   const s     = students.find(x => x.id === l.studentId)  || {};
   const color = t.color || '#8b949e';
@@ -383,7 +497,7 @@ window.openDetail = function(id) {
         <div class="det-ava" style="background:${color}22;color:${color};border-color:${color}">${(l.studentName||'?')[0]}</div>
         <div>
           <div class="det-name">${l.studentName}</div>
-          <div class="det-sub">${t.name || '-'} 선생님 · ${DAYS[l.day]}요일</div>
+          <div class="det-sub">${t.name || '-'} 선생님 · ${dayName}요일</div>
         </div>
       </div>
       <button class="icon-btn sm" onclick="closeModal('M_detail')">✕</button>
@@ -516,8 +630,7 @@ window.saveTeacher = async function() {
     phone: document.getElementById('tf_phone').value.trim(),
     email: document.getElementById('tf_email').value.trim(),
     color,
-    memo:  document.getElementById('tf_memo').value.trim(),
-    role:  'teacher',
+    memo:  document.getElementById('tf_memo').value.trim()
   };
   try {
     if (editTeacher) {
