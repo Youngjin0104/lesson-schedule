@@ -3,15 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="theme-color" content="#0d1117">
+<meta name="theme-color" content="#faf8f5">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="레슨스케줄">
 <link rel="manifest" href="/assets/manifest-BAEcPWzI.json">
 <title>레슨 스케줄 관리</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
-  <script type="module" crossorigin src="/assets/index-BjjrizGb.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-BhYbmppU.css">
+  <script type="module" crossorigin src="/assets/index-B7_Vb3bz.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-bEOFAfQX.css">
 </head>
 <body>
 
@@ -38,7 +38,7 @@
         <input class="finput" id="li_pw" type="password" placeholder="••••••••" autocomplete="current-password">
       </div>
       <div id="li_err" class="err-msg" style="display:none"></div>
-      <button class="btn btn-primary w100" id="li_btn" onclick="doLogin()" >로그인</button>
+      <button class="btn btn-primary w100" id="li_btn" onclick="doLogin()">로그인</button>
     </div>
     <p class="login-hint">계정 문의: 관리자에게 연락하세요</p>
   </div>
@@ -58,7 +58,7 @@
         <span id="uc_role" class="role-badge"></span>
         <span id="uc_name"></span>
       </div>
-      <button class="md" onclick="doLogout()" title="로그아웃">로그아웃</button>
+      <button class="md" onclick="doLogout()">로그아웃</button>
     </div>
   </div>
 
@@ -80,7 +80,7 @@
       <button class="snav-btn adm"    data-page="stats"     onclick="goPage('stats')">📊 통계/정산</button>
       <button class="snav-btn adm"    data-page="settings"  onclick="goPage('settings')">⚙️ 설정</button>
     </nav>
-    <div class="sb-footer">v1.0.1</div>
+    <div class="sb-footer">v1.0.2</div>
   </div>
 
   <!-- PAGE CONTAINER -->
@@ -93,8 +93,8 @@
         <span class="week-lbl" id="wk_label"></span>
         <button class="arrow-btn" onclick="changeWeek(1)">›</button>
       </div>
-      <div style="padding: 0 16px; margin-bottom: 10px;">
-        <button class="btn btn-ghost sm w100" onclick="copyLastWeek()" style="border: 1px dashed var(--ac); color: var(--ac);">
+      <div style="padding:0 16px;margin-bottom:10px;">
+        <button class="btn btn-ghost sm w100" onclick="copyLastWeek()" style="border:1px dashed var(--ac);color:var(--ac);">
           🔄 지난주 동일 요일 수업 불러오기
         </button>
       </div>
@@ -185,15 +185,6 @@
         <div class="fg">
           <label class="flabel">날짜 (자동지정)</label>
           <input class="finput" id="lf_date_display" readonly>
-          <!-- <label class="flabel">요일</label>
-          <select class="fselect" id="lf_day">
-            <option value="0">월요일</option>
-            <option value="1">화요일</option>
-            <option value="2">수요일</option>
-            <option value="3">목요일</option>
-            <option value="4">금요일</option>
-            <option value="5">토요일</option>
-          </select> -->
         </div>
       </div>
       <div class="frow">
@@ -339,6 +330,5 @@
 <!-- Toast -->
 <div id="toast" class="toast"></div>
 
-<!-- 모든 JS를 단일 ES module로 로드 -->
 </body>
 </html>
