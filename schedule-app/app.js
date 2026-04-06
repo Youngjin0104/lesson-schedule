@@ -171,8 +171,31 @@ window.doLogout = async function() {
   if (!confirm('로그아웃 하시겠습니까?')) return;
   unsubs.forEach(f => f());
   unsubs = [];
-  await fbSignOut();
-  showScreen('S_login');
+  
+  try {
+    await fbSignOut();
+    
+    // --- 로그인 화면 UI 초기화 코드 추가 ---
+    const btn = document.getElementById('li_btn');
+    if (btn) {
+      btn.textContent = '로그인';
+      btn.disabled = false;
+    }
+    
+    // 입력 필드 초기화 (선택 사항)
+    document.getElementById('li_email').value = '';
+    document.getElementById('li_pw').value = '';
+    
+    // 에러 메시지 숨기기
+    const errEl = document.getElementById('li_err');
+    if (errEl) errEl.style.display = 'none';
+    // ------------------------------------
+
+    showScreen('S_login');
+  } catch (error) {
+    console.error("로그아웃 중 오류 발생:", error);
+    alert("로그아웃 중 문제가 발생했습니다.");
+  }
 };
 
 document.addEventListener('keydown', e => {
