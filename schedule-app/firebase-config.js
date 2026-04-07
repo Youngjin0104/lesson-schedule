@@ -3,7 +3,8 @@
 
 import { initializeApp }                          from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword,
-         signOut, onAuthStateChanged }             from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+         signOut, onAuthStateChanged,
+         sendPasswordResetEmail }             from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getFirestore, collection, doc, getDocs,
          getDoc, setDoc, addDoc, updateDoc,
          deleteDoc, onSnapshot, query,
@@ -31,6 +32,7 @@ export const fbSignIn      = (email, pw) => signInWithEmailAndPassword(auth, ema
 export const fbSignOut     = ()          => signOut(auth);
 export const fbOnAuth      = (cb)        => onAuthStateChanged(auth, cb);
 export const fbCurrentUser = ()          => auth.currentUser;
+export const fbSendPasswordReset = (email) => sendPasswordResetEmail(auth, email);
 
 // ── USERS ─────────────────────────────────────
 export const fbGetUser  = async (uid) => {
