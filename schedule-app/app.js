@@ -4,9 +4,10 @@ import {
   fbGetUser, fbGetUsers, fbSetUser, fbDeleteUser, fbWatchUsers,
   fbGetStudents, fbAddStudent, fbUpdateStudent, fbDeleteStudent, fbWatchStudents,
   fbGetLessons,  fbAddLesson,  fbUpdateLesson,  fbDeleteLesson,  fbWatchLessons,
-  fbSendPasswordReset
 } from './firebase-config.js';
-
+import { 
+  getFunctions, httpsCallable 
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js";
 // ═══════════════════════════════════════════
 // CONSTANTS
 // ═══════════════════════════════════════════
@@ -178,8 +179,10 @@ window.doLogout = async function() {
     
     // --- 로그인 화면 UI 초기화 코드 추가 ---
     const btn = document.getElementById('li_btn');
+    const resetBtn   = document.getElementById('reset_btn');
     if (btn) {
       btn.textContent = '로그인';
+      resetBtn.textContent = '비밀번호 재설정';
       btn.disabled = false;
     }
     
@@ -939,37 +942,42 @@ if ('serviceWorker' in navigator) {
 window.doResetPassword = async function() {
   const email = document.getElementById('li_email').value.trim();
   const errEl = document.getElementById('li_err');
+  const btn   = document.getElementById('reset_btn');
+
+  if (document.activeElement) document.activeElement.blur();
   errEl.style.display = 'none';
 
   if (!email) {
-    errEl.textContent   = '이메일을 입력한 후 클릭하세요';
+    errEl.textContent = '이메일을 입력하세요';
     errEl.style.display = 'block';
     return;
   }
 
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email)) {
-    errEl.textContent   = '이메일 형식이 올바르지 않습니다';
-    errEl.style.display = 'block';
-    return;
-  }
-
-  const btn = document.getElementById('reset_btn');
   btn.textContent = '전송 중...';
-  btn.disabled    = true;
+  btn.disabled = true;
 
   try {
-    await fbSendPasswordReset(email);
-    toast('📧 비밀번호 재설정 메일을 발송했습니다');
+    const functions = getFunctions();
+    // Cloud Function 호출
+    const sendMail = httpsCallable(functions, 'sendCustomResetEmail');
+    const result = await sendMail({ email: email });
+
+    if (result.data.status === 'success') {
+      toast('📧 재설정 메일을 보냈습니다. 스팸함도 꼭 확인해주세요!');
+    } else {
+      throw new Error(result.data.message);
+    }
   } catch(e) {
-    let msg = '메일 발송에 실패했습니다';
-    if (e.code === 'auth/user-not-found')   msg = '등록되지 않은 이메일입니다';
-    if (e.code === 'auth/invalid-email')    msg = '이메일 형식이 올바르지 않습니다';
-    if (e.code === 'auth/too-many-requests') msg = '잠시 후 다시 시도해주세요';
-    errEl.textContent   = msg;
+    console.error(e);
+    if (e.code === 'auth/user-not-found') {
+      errEl.textContent = '등록되지 않은 이메일입니다.';
+    } else {
+      errEl.textContent = '메일 발송 중 오류가 발생했습니다.';
+    }
     errEl.style.display = 'block';
+    errEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
   } finally {
     btn.textContent = '메일 재전송';
-    btn.disabled    = false;
+    btn.disabled = false;
   }
 };
