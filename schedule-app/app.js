@@ -4,6 +4,7 @@ import {
   fbGetUser, fbGetUsers, fbSetUser, fbDeleteUser, fbWatchUsers,
   fbGetStudents, fbAddStudent, fbUpdateStudent, fbDeleteStudent, fbWatchStudents,
   fbGetLessons,  fbAddLesson,  fbUpdateLesson,  fbDeleteLesson,  fbWatchLessons,
+  fbSendPasswordReset
 } from './firebase-config.js';
 
 // ═══════════════════════════════════════════
@@ -189,6 +190,7 @@ window.doLogout = async function() {
     // 에러 메시지 숨기기
     const errEl = document.getElementById('li_err');
     if (errEl) errEl.style.display = 'none';
+    document.getElementById('li_email').blur();
     // ------------------------------------
 
     showScreen('S_login');
@@ -929,3 +931,45 @@ if ('serviceWorker' in navigator) {
     });
   }).catch(() => {});
 }
+
+
+// ═══════════════════════════════════════════
+// 비밀번호 재설정 메일 발송
+// ═══════════════════════════════════════════
+window.doResetPassword = async function() {
+  const email = document.getElementById('li_email').value.trim();
+  const errEl = document.getElementById('li_err');
+  errEl.style.display = 'none';
+
+  if (!email) {
+    errEl.textContent   = '이메일을 입력한 후 클릭하세요';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    errEl.textContent   = '이메일 형식이 올바르지 않습니다';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  const btn = document.getElementById('reset_btn');
+  btn.textContent = '전송 중...';
+  btn.disabled    = true;
+
+  try {
+    await fbSendPasswordReset(email);
+    toast('📧 비밀번호 재설정 메일을 발송했습니다');
+  } catch(e) {
+    let msg = '메일 발송에 실패했습니다';
+    if (e.code === 'auth/user-not-found')   msg = '등록되지 않은 이메일입니다';
+    if (e.code === 'auth/invalid-email')    msg = '이메일 형식이 올바르지 않습니다';
+    if (e.code === 'auth/too-many-requests') msg = '잠시 후 다시 시도해주세요';
+    errEl.textContent   = msg;
+    errEl.style.display = 'block';
+  } finally {
+    btn.textContent = '메일 재전송';
+    btn.disabled    = false;
+  }
+};
