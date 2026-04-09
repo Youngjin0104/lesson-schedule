@@ -14,7 +14,7 @@ import { getFirestore, collection, doc, getDocs,
 //  🔧 여기만 교체하세요
 // ─────────────────────────────────────────────
 const firebaseConfig = {
-  apiKey: "AIzaSyAOU7qLINaGItX-SeyQumHOskHxOrL-nvk",
+  apiKey: "AIzaSyDj2-ZpGaV21XcedM_C9Z3dA87xIZ1UR3Q",
   authDomain: "lesson-schedule-a14a3.firebaseapp.com",
   projectId: "lesson-schedule-a14a3",
   storageBucket: "lesson-schedule-a14a3.firebasestorage.app",
