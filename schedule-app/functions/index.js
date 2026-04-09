@@ -46,16 +46,9 @@ exports.createTeacherAccount = onRequest({ cors: true }, async (req, res) => {
   }
 });
 
-// Gmail 발송 설정
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: "crona.yc@gmail.com", 
-    pass: "exeu uvuf hemt ephe" // 2단계 인증 후 발급받은 앱 비밀번호
-  }
-});
-
-exports.sendCustomResetEmail = onCall({ cors: true }, async (request) => {
+exports.sendCustomResetEmail = onCall({ 
+  cors: true,
+  secrets: ["GMAIL_PASS"] }, async (request) => {
   // onCall에서는 req.body.data가 아니라 request.data로 바로 접근합니다.
   const { email } = request.data || {};
 
@@ -63,6 +56,15 @@ exports.sendCustomResetEmail = onCall({ cors: true }, async (request) => {
     // 에러를 던질 때도 HttpsError를 사용하는 것이 좋습니다. (선택사항)
     throw new Error("이메일 정보가 누락되었습니다.");
   }
+
+  // Gmail 발송 설정
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: "crona.yc@gmail.com", 
+      pass: process.env.GMAIL_PASS // 2단계 인증 후 발급받은 앱 비밀번호
+    }
+  });
 
   try {
     const link = await admin.auth().generatePasswordResetLink(email);
