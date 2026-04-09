@@ -1,15 +1,29 @@
-const { onRequest, onCall } = require("firebase-functions/v2/https");
+const { onCall, HttpsError } = require("firebase-functions/v2/https");
+const { onDocumentDeleted } = require("firebase-functions/v2/firestore");
 const admin = require("firebase-admin");
 const nodemailer = require("nodemailer");
 
 admin.initializeApp();
 
-exports.createTeacherAccount = onRequest({ cors: true }, async (req, res) => {
-  // Cloud Functions v2 호출 시 데이터는 req.body.data에 들어있습니다.
-  const { email, password, name, color, phone, memo } = req.body.data || {};
+exports.createTeacherAccount = onCall(async (request) => {
+  // 인증(Authentication) 검증: 로그인이 되어있는가?
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "로그인된 사용자만 접근할 수 있습니다.");
+  }
+  // 인가(Authorization) 검증: 관리자(admin) 권한인가?
+  // 클라이언트의 me.role을 믿지 않고, 서버에서 직접 Firestore를 조회해 교차 검증합니다.
+  const callerUid = request.auth.uid;
+  const callerDoc = await admin.firestore().collection("users").doc(callerUid).get();
+  
+  if (!callerDoc.exists || callerDoc.data().role !== "admin") {
+    throw new HttpsError("permission-denied", "관리자 권한이 없습니다. 비정상적인 접근입니다.");
+  }
+
+  // v2 onCall에서는 페이로드가 request.data 에 바로 담깁니다. (req.body.data 아님)
+  const { email, password, name, color, phone, memo } = request.data || {};
 
   if (!email || !password) {
-    return res.status(400).json({ data: { status: "error", message: "필수 정보가 누락되었습니다." } });
+    throw new HttpsError("invalid-argument", "필수 정보(이메일, 비밀번호)가 누락되었습니다.");
   }
 
   try {
@@ -31,18 +45,16 @@ exports.createTeacherAccount = onRequest({ cors: true }, async (req, res) => {
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 
-    // 성공 응답 (반드시 data 객체로 감싸서 반환)
-    res.json({ data: { status: "success", uid: userRecord.uid } });
+    return { status: "success", uid: userRecord.uid };
   } catch (error) {
     console.error("Error creating user:", error);
-    let message = error.message;
   
-    // 이메일 중복 에러 처리
+    // 이메일 중복 등 Firebase Auth 자체 에러 처리
     if (error.code === 'auth/email-already-exists') {
-      message = "이미 등록된 이메일 주소입니다.";
+      throw new HttpsError("already-exists", "이미 사용 중인 이메일입니다.");
     }
 
-    res.status(500).json({ data: { status: "error", message: error.message } });
+    throw new HttpsError("internal", error.message);
   }
 });
 
@@ -93,5 +105,26 @@ exports.sendCustomResetEmail = onCall({
     console.error("Mail Error:", error);
     // 에러 발생 시 에러를 던집니다.
     throw new Error(error.message);
+  }
+});
+
+// Firestore 트리거: users 컬렉션의 문서가 삭제될 때 실행
+exports.onUserDeleted = onDocumentDeleted("users/{uid}", async (event) => {
+  // snapshot 인자를 나열하지 않고 event.params에서 바로 uid를 가져옵니다.
+  const uid = event.params.uid;
+
+  console.log(`Firestore 문서 삭제 감지됨. Auth 계정 삭제 시작: ${uid}`);
+
+  try {
+    // Firebase Authentication에서 해당 UID의 사용자 삭제
+    await admin.auth().deleteUser(uid);
+    console.log(`Successfully deleted auth user: ${uid}`);
+  } catch (error) {
+    // 이미 계정이 지워졌거나 없는 경우에 대한 예외 처리
+    if (error.code === 'auth/user-not-found') {
+      console.log('User already deleted from Auth or does not exist.');
+    } else {
+      console.error('Error deleting auth user:', error);
+    }
   }
 });

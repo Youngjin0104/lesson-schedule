@@ -375,14 +375,18 @@ function openLessonModalWithDate(id, overrideDate) {
   // 날짜 설정: 수정 → 기존 날짜 / 신규 → overrideDate 또는 현재 선택 날짜
   const dateVal = l ? l.date : (overrideDate || getSelDateStr());
   document.getElementById('lf_date_display').value = dateVal;
-
   document.getElementById('M_lesson_title').textContent = l ? '수업 수정' : '수업 추가';
   document.getElementById('lf_del').style.display       = l ? 'block' : 'none';
+
+  // 관리자면 전체 학생, 선생님이면 본인이 담당인 학생만 필터링
+  const filteredStudents = me && me.role === 'admin' 
+    ? students 
+    : students.filter(s => s.teacherId === me.uid);
 
   // 학생 셀렉트
   document.getElementById('lf_stu').innerHTML =
     '<option value="">-- 학생 선택 --</option>' +
-    students.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+    filteredStudents.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
 
   // 선생님 셀렉트
   const teacherSelect = document.getElementById('lf_teacher');
@@ -414,7 +418,7 @@ function openLessonModalWithDate(id, overrideDate) {
   } else {
     document.getElementById('lf_stu').value     = '';
     document.getElementById('lf_stuname').value = '';
-    // ★ Fix 4: 선생님도 본인이 기본 선택됨
+    // 선생님도 본인이 기본 선택됨
     const myId       = me ? me.uid : '';
     const isMeInList = teachers.some(t => t.id === myId);
     document.getElementById('lf_teacher').value =
@@ -644,7 +648,6 @@ window.openTeacherModal = function(id) {
   openModal('M_teacher');
 };
 
-// ★ Fix 1: saveTeacher - tf_color → #tf_colors .cswatch.sel 에서 색상 읽기
 window.saveTeacher = async function() {
   const name  = document.getElementById('tf_name').value.trim();
   const email = document.getElementById('tf_email').value.trim();
@@ -658,7 +661,7 @@ window.saveTeacher = async function() {
 
   try {
     if (editTeacher) {
-      // 수정 모드
+      // 수정 모드 (기존 유지)
       const data = {
         name,
         email,
@@ -670,29 +673,31 @@ window.saveTeacher = async function() {
       await fbSetUser(editTeacher, data);
       toast('✅ 정보가 수정되었습니다');
     } else {
-      // 신규 추가 — Cloud Function 호출
+      // 💡 신규 추가 — httpsCallable 올바른 사용법
       if (!pw) return toast('비밀번호를 입력하세요');
 
-      const functionUrl = 'https://us-central1-lesson-schedule-a14a3.cloudfunctions.net/createTeacherAccount';
-      const response = await fetch(functionUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ data: {
-          email, password: pw,
-          name,  color,
-          phone: document.getElementById('tf_phone').value.trim(),
-          memo:  document.getElementById('tf_memo').value.trim(),
-        }}),
+      const functions = getFunctions();
+      // 함수 URL 전체가 아닌, 배포된 함수 이름만 적습니다.
+      const createTeacherFn = httpsCallable(functions, 'createTeacherAccount');
+      
+      // method, header, JSON.stringify 없이 보낼 데이터 객체만 바로 넘깁니다.
+      const result = await createTeacherFn({
+        email: email, 
+        password: pw,
+        name: name,  
+        color: color,
+        phone: document.getElementById('tf_phone').value.trim(),
+        memo:  document.getElementById('tf_memo').value.trim()
       });
-      if (!response.ok) throw new Error('서버 연결에 실패했습니다.');
-      const resJson = await response.json();
-      const result  = resJson.data;
-      if (result?.status === 'success') {
+
+      // 서버가 성공적으로 응답하면 result.data에 결과가 담겨옵니다. (response.ok 체크 불필요)
+      if (result.data?.status === 'success') {
         toast('✅ 선생님 계정이 생성되었습니다');
       } else {
-        throw new Error(result?.message || '계정 생성 실패');
+        throw new Error(result.data?.message || '❌ 계정 생성 실패');
       }
     }
+    
     closeModal('M_teacher');
   } catch(e) {
     console.error('saveTeacher error:', e);
