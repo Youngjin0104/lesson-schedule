@@ -81,6 +81,21 @@ async function loadData() {
 }
 
 // ═══════════════════════════════════════════
+// SECURITY UTILS
+// ═══════════════════════════════════════════
+function escapeHtml(text) {
+  if (!text) return '';
+  const map = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;'
+  };
+  return String(text).replace(/[&<>"']/g, (m) => map[m]);
+}
+
+// ═══════════════════════════════════════════
 // SCREEN CONTROL
 // ═══════════════════════════════════════════
 function showScreen(id) {
@@ -314,7 +329,10 @@ function renderSchedule() {
   if (me.role === 'admin') {
     statsEl.innerHTML = teachers.map(t => {
       const cnt = dayAll.filter(l => l.teacherId === t.id).length;
-      return `<div class="stat-pill"><div class="sn" style="color:${t.color||COLORS[0]}">${cnt}</div><div class="sl">${t.name}</div></div>`;
+      return `<div class="stat-pill">
+      <div class="sn" style="color:${t.color||COLORS[0]}">${cnt}</div>
+      <div class="sl">${escapeHtml(t.name)}</div>
+      </div>`;
     }).join('') + `<div class="stat-pill"><div class="sn">${dayAll.length}</div><div class="sl">전체</div></div>`;
   } else {
     const cnt = dayAll.filter(l => l.teacherId === me.uid).length;
@@ -334,19 +352,19 @@ function renderSchedule() {
     const t = teachers.find(x => x.id === l.teacherId) || {};
     const c = t.color || '#8b949e';
     return `<div class="lcard" style="animation-delay:${idx*.03}s" onclick="openDetail('${l.id}')">
-      <div class="lc-time"><span class="t">${l.time||''}</span></div>
+      <div class="lc-time"><span class="t">${escapeHtml(l.time||'')}</span></div>
       <div class="lc-conn">
         <div class="lc-dot" style="background:${c}"></div>
         <div class="lc-line"></div>
       </div>
       <div class="lc-body">
         <div style="position:absolute;left:0;top:0;bottom:0;width:4px;background:${c};border-radius:4px 0 0 4px"></div>
-        <div class="lc-name">${l.studentName||''}</div>
+        <div class="lc-name">${escapeHtml(l.studentName||'')}</div>
         <div class="lc-meta">
-          <span class="lc-badge" style="background:${c}22;color:${c}">${t.name||'미배정'}</span>
+          <span class="lc-badge" style="background:${c}22;color:${c}">${escapeHtml(t.name||'미배정')}</span>
           <span class="lc-dur">${l.duration||50}분</span>
         </div>
-        ${l.memo ? `<div class="lc-memo">★ ${l.memo}</div>` : ''}
+        ${l.memo ? `<div class="lc-memo">★ ${escapeHtml(l.memo)}</div>` : ''}
       </div>
     </div>`;
   }).join('');
@@ -581,7 +599,7 @@ function renderCalDetail() {
   let dl = lessons.filter(l => l.date === dateStr && (!filterTid || l.teacherId === filterTid));
   dl = [...dl].sort((a,b) => (a.time||'').localeCompare(b.time||''));
 
-  // ★ Fix 3: 수업 추가 버튼
+  // 수업 추가 버튼
   const addBtn = `<button class="btn btn-primary btn-sm" onclick="openLessonFromCalendar()" style="padding:6px 14px;font-size:12px">+ 수업 추가</button>`;
 
   if (!dl.length) {
@@ -706,9 +724,26 @@ window.saveTeacher = async function() {
 };
 
 window.deleteTeacher = async function() {
+  if (!editTeacher) return;
+  
+  // 🚨 보안 체크: 현재 수정하려는 대상이 나 자신(관리자)인가?
+  if (editTeacher === me.uid) {
+    return toast('❌ 본인 계정은 삭제할 수 없습니다.');
+  }
+
+  // 🚨 보안 체크: 대상이 관리자인지 한 번 더 확인 (데이터 기반)
+  const targetTeacher = teachers.find(t => t.id === editTeacher);
+  if (targetTeacher && targetTeacher.role === 'admin') {
+    return toast('❌ 관리자 계정은 보호 정책에 의해 삭제가 불가합니다.');
+  }
+
   if (!confirm('선생님을 삭제할까요? 수업 기록은 유지됩니다.')) return;
+  
   try { await fbDeleteUser(editTeacher); toast('🗑 삭제되었습니다'); closeModal('M_teacher'); }
-  catch(e) { toast('오류: ' + e.message); }
+  catch(e) {
+    console.error(e);
+    toast('❌ 삭제 권한이 없거나 오류가 발생했습니다.');
+  }
 };
 
 // ═══════════════════════════════════════════
@@ -740,12 +775,12 @@ window.renderStudents = function() {
     const wk = lessons.filter(l => l.studentId === s.id).length;
     return `<div class="scard" onclick="openStudentModal('${s.id}')">
       <div class="sc-top">
-        <span class="sc-name">${s.name}</span>
-        <span class="sc-badge" style="background:${c}22;color:${c}">${t.name||'미배정'}</span>
+        <span class="sc-name">${escapeHtml(s.name)}</span>
+        <span class="sc-badge" style="background:${c}22;color:${c}">${escapeHtml(t.name||'미배정')}</span>
       </div>
       <div class="sc-info">
-        ${s.phone       ? `<span>📱 ${s.phone}</span>` : ''}
-        ${s.parentPhone ? `<span>👪 ${s.parentPhone}</span>` : ''}
+        ${s.phone       ? `<span>📱 ${escapeHtml(s.phone)}</span>` : ''}
+        ${s.parentPhone ? `<span>👪 ${escapeHtml(s.parentPhone)}</span>` : ''}
         ${s.fee         ? `<span>💰 ${Number(s.fee).toLocaleString()}원</span>` : ''}
         <span>총 ${wk}회 수업</span>
       </div>
