@@ -1021,3 +1021,38 @@ window.doResetPassword = async function() {
     btn.disabled = false;
   }
 };
+
+// 연락처 자동 하이픈 생성 함수
+window.autoHyphen = function(target) {
+  // 숫자 이외의 문자 제거
+  let val = target.value.replace(/[^0-9]/g, '');
+  let str = "";
+
+  // 1. 서울 지역번호(02)인 경우
+  if (val.substring(0, 2) === '02') {
+    if (val.length < 3) {
+      str = val;
+    } else if (val.length < 6) {
+      str = val.substr(0, 2) + "-" + val.substr(2);
+    } else if (val.length < 10) { // 02-123-1234 형식
+      str = val.substr(0, 2) + "-" + val.substr(2, 3) + "-" + val.substr(5);
+    } else { // 02-1234-1234 형식
+      str = val.substr(0, 2) + "-" + val.substr(2, 4) + "-" + val.substr(6, 4);
+    }
+  } 
+  // 2. 그 외 (010, 031, 051 등) 3자리 지역번호/식별번호인 경우
+  else {
+    if (val.length < 4) {
+      str = val;
+    } else if (val.length < 7) {
+      str = val.substr(0, 3) + "-" + val.substr(3);
+    } else if (val.length < 11) { // 010-123-1234 형식
+      str = val.substr(0, 3) + "-" + val.substr(3, 3) + "-" + val.substr(6);
+    } else { // 010-1234-1234 형식
+      str = val.substr(0, 3) + "-" + val.substr(3, 4) + "-" + val.substr(7, 4);
+    }
+  }
+  
+  // 최대 13자리(010-1234-1234)까지만 표시
+  target.value = str.substring(0, 13);
+};
