@@ -13,6 +13,11 @@ import {
 // ═══════════════════════════════════════════
 const DAYS   = ['월','화','수','목','금','토','일'];
 const COLORS = ['#58a6ff','#f0984a','#3fb950','#bc8cff','#f85149','#39d3d3','#e3a645','#ff79c6'];
+const APP_VERSION = import.meta.env.VITE_APP_VERSION || '1.0.0'; 
+const versionEl = document.getElementById('app-version-display');
+if (versionEl) {
+    versionEl.textContent = APP_VERSION;
+}
 
 // ═══════════════════════════════════════════
 // STATE
@@ -35,6 +40,47 @@ let stOff      = 0;
 let editLesson  = null;
 let editTeacher = null;
 let editStudent = null;
+
+
+// ═══════════════════════════════════════════
+// VERSION CHECK
+// ═══════════════════════════════════════════
+async function autoHardRefresh() {
+  const savedVersion = localStorage.getItem('app_version');
+  if (savedVersion !== APP_VERSION) {
+    if ('serviceWorker' in navigator) {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      for (let r of regs) await r.unregister();
+      const keys = await caches.keys();
+      for (let k of keys) await caches.delete(k);
+    }
+    localStorage.setItem('app_version', APP_VERSION);
+    window.location.reload(true); 
+  }
+}
+
+// ═══════════════════════════════════════════
+// SESSION TIMEOUT CHECK
+// ═══════════════════════════════════════════
+function checkSessionTimeout() {
+  const loginTime = localStorage.getItem('login_timestamp');
+  if (!loginTime) return;
+
+  const now = Date.now();
+  const limit = SESSION_TIMEOUT_MIN * 60 * 1000;
+
+  if (now - parseInt(loginTime) > limit) {
+    localStorage.removeItem('login_timestamp');
+    fbSignOut().then(() => {
+      alert("세션이 만료되었습니다. 다시 로그인해 주세요.");
+      window.location.href = 'index.html';
+    });
+  }
+}
+autoHardRefresh(); 
+checkSessionTimeout();
+
+setInterval(checkSessionTimeout, 60000);
 
 // 현재 선택된 탭 날짜를 "YYYY-MM-DD"로 반환
 function getSelDateStr() {
@@ -176,6 +222,7 @@ window.doLogin = async function() {
   btn.disabled    = true;
   try {
     await fbSignIn(email, pw);
+    localStorage.setItem('login_timestamp', Date.now().toString());
   } catch(e) {
     errEl.textContent   = '이메일 또는 비밀번호가 올바르지 않습니다.';
     errEl.style.display = 'block';
@@ -191,7 +238,7 @@ window.doLogout = async function() {
   
   try {
     await fbSignOut();
-    
+    localStorage.removeItem('login_timestamp');
     // --- 로그인 화면 UI 초기화 코드 추가 ---
     const btn = document.getElementById('li_btn');
     const resetBtn   = document.getElementById('reset_btn');
@@ -907,7 +954,7 @@ function renderSettings() {
     <div class="set-section">정보</div>
     <div class="set-item">
       <div class="si-l"><span>ℹ️</span><span>버전</span></div>
-      <span style="font-size:12px;color:var(--tx2)">v1.0.2</span>
+      <span style="font-size:12px;color:var(--tx2)">v</span><span id="app-version-display"></span>
     </div>`;
 }
 
@@ -958,23 +1005,6 @@ function toast(msg) {
   clearTimeout(el._t);
   el._t = setTimeout(() => el.classList.remove('show'), 2600);
 }
-
-// ═══════════════════════════════════════════
-// SERVICE WORKER
-// ═══════════════════════════════════════════
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js').then(reg => {
-    reg.addEventListener('updatefound', () => {
-      const nw = reg.installing;
-      nw.addEventListener('statechange', () => {
-        if (nw.state === 'installed' && navigator.serviceWorker.controller) {
-          if (confirm('새로운 버전이 있습니다. 업데이트하시겠습니까?')) window.location.reload();
-        }
-      });
-    });
-  }).catch(() => {});
-}
-
 
 // ═══════════════════════════════════════════
 // 비밀번호 재설정 메일 발송

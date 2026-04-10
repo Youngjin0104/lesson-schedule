@@ -69,5 +69,3 @@ node_modules/
 # dataconnect generated files
 .dataconnect
 
-# Firebase 설정 파일 제외
-firebase-config.js

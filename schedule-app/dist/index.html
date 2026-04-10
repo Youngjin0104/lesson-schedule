@@ -9,9 +9,9 @@
 <meta name="apple-mobile-web-app-title" content="레슨스케줄">
 <link rel="manifest" href="/assets/manifest-BAEcPWzI.json">
 <title>레슨 스케줄 관리</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
-  <script type="module" crossorigin src="/assets/index-B7_Vb3bz.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-bEOFAfQX.css">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <script type="module" crossorigin src="/assets/index-DeWnnk-c.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-DfCUZ_cS.css">
 </head>
 <body>
 
@@ -39,6 +39,10 @@
       </div>
       <div id="li_err" class="err-msg" style="display:none"></div>
       <button class="btn btn-primary w100" id="li_btn" onclick="doLogin()">로그인</button>
+      <div class="reset-wrap">
+        <span class="reset-hint">비밀번호를 잊으셨나요?</span>
+        <button class="btn btn-ghost sm" id="reset_btn" onclick="doResetPassword()">비밀번호 재설정</button>
+      </div>
     </div>
     <p class="login-hint">계정 문의: 관리자에게 연락하세요</p>
   </div>
@@ -80,7 +84,7 @@
       <button class="snav-btn adm"    data-page="stats"     onclick="goPage('stats')">📊 통계/정산</button>
       <button class="snav-btn adm"    data-page="settings"  onclick="goPage('settings')">⚙️ 설정</button>
     </nav>
-    <div class="sb-footer">v1.0.2</div>
+    <div class="sb-footer">v<span id="app-version-display"></span></div>
   </div>
 
   <!-- PAGE CONTAINER -->
@@ -233,7 +237,8 @@
         </div>
         <div class="fg">
           <label class="flabel">전화번호</label>
-          <input class="finput" id="tf_phone" type="tel" placeholder="010-0000-0000">
+          <input class="finput" id="tf_phone" type="tel" 
+          placeholder="010-0000-0000" maxlength="13" oninput="autoHyphen(this)">
         </div>
       </div>
       <div class="frow">
@@ -243,7 +248,7 @@
         </div>
         <div class="fg">
           <label class="flabel">초기 비밀번호</label>
-          <input class="finput" id="tf_pw" type="password" placeholder="8자 이상">
+          <input class="finput" id="tf_pw" type="password" placeholder="6자 이상">
         </div>
       </div>
       <div class="fg">
@@ -281,7 +286,8 @@
         </div>
         <div class="fg">
           <label class="flabel">학생 전화번호</label>
-          <input class="finput" id="sf_phone" type="tel" placeholder="010-0000-0000">
+          <input class="finput" id="sf_phone" type="tel" 
+          placeholder="010-0000-0000" maxlength="13" oninput="autoHyphen(this)">
         </div>
       </div>
       <div class="frow">
@@ -291,7 +297,8 @@
         </div>
         <div class="fg">
           <label class="flabel">보호자 연락처</label>
-          <input class="finput" id="sf_pphone" type="tel" placeholder="010-0000-0000">
+          <input class="finput" id="sf_pphone" type="tel" 
+          placeholder="010-0000-0000" maxlength="13" oninput="autoHyphen(this)">
         </div>
       </div>
       <div class="frow">
@@ -329,6 +336,6 @@
 
 <!-- Toast -->
 <div id="toast" class="toast"></div>
-
+
 </body>
 </html>
