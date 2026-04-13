@@ -18,7 +18,7 @@ const versionEl = document.getElementById('app-version-display');
 if (versionEl) {
     versionEl.textContent = APP_VERSION;
 }
-
+const SESSION_TIMEOUT_MIN = parseInt(import.meta.env.VITE_SESSION_TIMEOUT_MIN) || 60;
 // ═══════════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════════
@@ -239,18 +239,7 @@ window.doLogout = async function() {
   try {
     await fbSignOut();
     localStorage.removeItem('login_timestamp');
-    // --- 로그인 화면 UI 초기화 코드 추가 ---
-    const btn = document.getElementById('li_btn');
-    const resetBtn   = document.getElementById('reset_btn');
-    if (btn) {
-      btn.textContent = '로그인';
-      resetBtn.textContent = '비밀번호 재설정';
-      btn.disabled = false;
-    }
-    
-    // 입력 필드 초기화 (선택 사항)
-    document.getElementById('li_email').value = '';
-    document.getElementById('li_pw').value = '';
+    location.reload()
     
     // 에러 메시지 숨기기
     const errEl = document.getElementById('li_err');
