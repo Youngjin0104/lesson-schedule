@@ -128,3 +128,43 @@ exports.onUserDeleted = onDocumentDeleted("users/{uid}", async (event) => {
     }
   }
 });
+
+exports.updateTeacherAccount = onCall({ cors: true }, async (request) => {
+  // 1. 관리자 권한 체크 (기존 createTeacherAccount와 동일)
+  if (!request.auth) throw new HttpsError("unauthenticated", "로그인이 필요합니다.");
+  
+  const callerUid = request.auth.uid;
+  const callerDoc = await admin.firestore().collection("users").doc(callerUid).get();
+  if (!callerDoc.exists || callerDoc.data().role !== "admin") {
+    throw new HttpsError("permission-denied", "관리자 권한이 없습니다.");
+  }
+
+  try {
+    const { uid, email, password, name, color, phone, memo } = request.data;
+  
+    const updateData = {};
+    if (email) updateData.email = email;
+    if (password && password.length >= 6) updateData.password = password; // 비밀번호가 있을 때만 업데이트
+    if (name) updateData.displayName = name;
+
+    // 2. Auth 정보 업데이트 (비밀번호 포함)
+    if (Object.keys(updateData).length > 0) {
+      await admin.auth().updateUser(uid, updateData);
+    }
+
+    // 3. Firestore 정보 업데이트
+    await admin.firestore().collection("users").doc(uid).update({
+      name,
+      email,
+      color,
+      phone: phone || "",
+      memo: memo || "",
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    return { status: "success" };
+  } catch (error) {
+    console.error("Update Error:", error);
+    throw new HttpsError("internal", error.message);
+  }
+});

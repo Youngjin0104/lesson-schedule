@@ -713,24 +713,28 @@ window.saveTeacher = async function() {
   const colorEl = document.querySelector('#tf_colors .cswatch.sel');
   const color   = colorEl ? colorEl.dataset.color : COLORS[0];
 
+  const functions = getFunctions();
+
   try {
     if (editTeacher) {
-      // 수정 모드 (기존 유지)
-      const data = {
-        name,
+      if (pw && pw.length < 6) return toast('비밀번호는 최소 6자리 이상이어야 합니다');
+      // --- 수정 모드 ---
+      const updateTeacherFn = httpsCallable(functions, 'updateTeacherAccount');
+      const result = await updateTeacherFn({
+        uid: editTeacher, // 수정할 대상의 UID
         email,
-        phone: document.getElementById('tf_phone').value.trim(),
+        password: pw,     // 입력했을 경우에만 서버에서 처리됨
+        name,
         color,
-        memo:  document.getElementById('tf_memo').value.trim(),
-        role:  'teacher',
-      };
-      await fbSetUser(editTeacher, data);
-      toast('✅ 정보가 수정되었습니다');
+        phone: document.getElementById('tf_phone').value.trim(),
+        memo:  document.getElementById('tf_memo').value.trim()
+      });
+      
+      if (result.data?.status === 'success') toast('✅ 정보가 수정되었습니다');
     } else {
       // 💡 신규 추가 — httpsCallable 올바른 사용법
       if (!pw) return toast('비밀번호를 입력하세요');
-
-      const functions = getFunctions();
+      if (pw.length < 6) return toast('비밀번호는 최소 6자리 이상이어야 합니다');
       // 함수 URL 전체가 아닌, 배포된 함수 이름만 적습니다.
       const createTeacherFn = httpsCallable(functions, 'createTeacherAccount');
       
