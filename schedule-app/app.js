@@ -19,6 +19,8 @@ if (versionEl) {
     versionEl.textContent = APP_VERSION;
 }
 const SESSION_TIMEOUT_MIN = parseInt(import.meta.env.VITE_SESSION_TIMEOUT_MIN) || 60;
+
+window.APP_VERSION = APP_VERSION;
 // ═══════════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════════
@@ -947,7 +949,7 @@ function renderSettings() {
     <div class="set-section">정보</div>
     <div class="set-item">
       <div class="si-l"><span>ℹ️</span><span>버전</span></div>
-      <span style="font-size:12px;color:var(--tx2)">v</span><span id="app-version-display"></span>
+      <span style="font-size:12px;color:var(--tx2)">v${window.APP_VERSION}</span>
     </div>`;
 }
 
