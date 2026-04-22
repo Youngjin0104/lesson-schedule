@@ -47,16 +47,28 @@ a { color:inherit; text-decoration:none; }
   flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
   padding:32px 24px; overflow-y:auto;
 }
-.login-logo { text-align:center; margin-bottom:32px; }
+/* .login-logo { text-align:center; margin-bottom:32px; } */
 /* .logo-emoji  { font-size:54px; margin-bottom:10px; } */
 /* .logo-title  { font-size:26px; font-weight:900; letter-spacing:-1px; color:var(--tx); } */
-.logo-sub    { font-size:13px; color:var(--tx2); margin-top:5px; }
+/* .logo-sub    { font-size:13px; color:var(--tx2); margin-top:5px; } */
 .login-card  { width:100%; max-width:360px; background:var(--sf); border:1px solid var(--bd); border-radius:20px; padding:24px 20px; box-shadow:var(--sh); }
 .login-hint  { font-size:12px; color:var(--tx3); margin-top:18px; }
 .err-msg     { font-size:12px; color:var(--rd); background:rgba(192,57,43,.08); border-radius:8px; padding:8px 10px; margin-bottom:10px; border:1px solid rgba(192,57,43,.2); }
 
 .logo-title {
-  block-size: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 15px;
+}
+
+.logo-title img {
+  width: 400px;          /* 원하는 너비로 조정 */
+  max-width: 100%;       /* 모바일 대응 */
+  height: auto;          /* 비율 유지 */
+  display: block;
+  object-fit: contain;
+  image-rendering: -webkit-optimize-contrast; /* 선명도 향상 */
 }
 
 .reset-wrap {
